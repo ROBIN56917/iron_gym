@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Entrenador extends Persona {
+public class Trainer extends Persona {
     private List<ClaseGrupal> clasesAsignadas;
     private String especializacion;
     

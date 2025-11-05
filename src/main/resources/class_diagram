@@ -1,0 +1,96 @@
+
+
++--------------------------------+
+|           Attendance            |
++--------------------------------+
+| - id: String                   |
+| - date: LocalDateTime          |
+| - client: Client               |
+| - groupClass: GroupClass       |
+| - present: boolean             |
++--------------------------------+
+
+
++--------------------------------+
+|           Client               |
++--------------------------------+
+| - id: String                   |
+| - name: String                 |
+| - email: String                |
+| - phone: String                |
+| - membershipType: MembershipType |
++--------------------------------+
+
+
++--------------------------------+
+|           GroupClass           |
++--------------------------------+
+| - id: String                   |
+| - name: String                 |
+| - maxCapacity: int             |
+| - schedule: String             |
+| - trainer: Trainer             |
+| - registeredClients: List<Client> |
++--------------------------------+
+
+
++--------------------------------+
+|           Trainer              |
++--------------------------------+
+| - id: String                   |
+| - name: String                 |
+| - email: String                |
+| - phone: String                |
+| - specialization: String       |
++--------------------------------+
+
+
++--------------------------------+
+|           MembershipType       |
++--------------------------------+
+| - id: String                   |
+| - type: MembershipTypeEnum     |
+| - startDate: LocalDate         |
+| - endDate: LocalDate           |
+| - price: double                |
++--------------------------------+
+
+
++--------------------------------+
+|           MembershipTypeEnum   |
++--------------------------------+
+| - BASICA: MembershipTypeEnum   |
+| - PREMIUM: MembershipTypeEnum  |
+| - VIP: MembershipTypeEnum      |
++--------------------------------+
+
+
++--------------------------------+
+|           PaymentMethod        |
++--------------------------------+
+| - EFECTIVO: PaymentMethod      |
+| - TARJETA: PaymentMethod       |
+| - TRANSFERENCIA: PaymentMethod |
++--------------------------------+
+
+
++--------------------------------+
+|           Routine              |
++--------------------------------+
+| - id: String                   |
+| - objective: String            |
+| - exercises: List<Exercise>    |
+| - difficultyLevel: String      |
+| - durationMinutes: int         |
++--------------------------------+
+
+
++--------------------------------+
+|           Exercise             |
++--------------------------------+
+| - id: String                   |
+| - name: String                 |
+| - description: String          |
+| - durationMinutes: int         |
+| - difficultyLevel: String      |
++--------------------------------+

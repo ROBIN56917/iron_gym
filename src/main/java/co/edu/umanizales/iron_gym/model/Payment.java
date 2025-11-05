@@ -9,11 +9,11 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Pago {
+public class Payment {
     private String id;
-    private double monto;
-    private LocalDateTime fecha;
-    private MetodoPago metodoPago;
+    private double amount;
+    private LocalDateTime date;
+    private PaymentMethod paymentMethod;
     private String referencia;
-    private String descripcion;
+    private String description;
 }

@@ -10,14 +10,14 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Rutina {
+public class Routine {
     private String id;
-    private String objetivo;
+    private String objective;
     private List<Exercise> exercises;
-    private String nivelDificultad;
-    private int duracionMinutos;
+    private String difficultyLevel;
+    private int durationMinutes;
     
-    public void agregarEjercicio(Exercise exercise) {
+    public void addExercise(Exercise exercise) {
         if (exercises == null) {
             exercises = new ArrayList<>();
         }

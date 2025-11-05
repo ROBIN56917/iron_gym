@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Suplemento {
+public class Supplement {
     private String id;
     private String nombre;
     private String marca;

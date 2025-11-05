@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Equipo {
+public class Equipment {
     private String id;
     private String tipo;
     private EstadoEquipo estado;

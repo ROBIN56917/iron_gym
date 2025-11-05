@@ -1,6 +1,6 @@
 package co.edu.umanizales.iron_gym.model;
 
-public enum TipoMembresia {
+public enum MembershipTypeEnum {
     BASICA,
     PREMIUM,
     VIP

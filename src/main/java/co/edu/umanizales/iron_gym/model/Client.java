@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Cliente extends Person {
+public class Client extends Person {
     private Membership membership;
     
     @Override

@@ -9,10 +9,10 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Asistencia {
+public class Attendance {
     private String id;
-    private LocalDateTime fecha;
-    private Cliente cliente;
-    private ClaseGrupal clase;
-    private boolean presente;
+        private LocalDateTime date;
+    private Client client;
+    private GroupClass groupClass;
+    private boolean present;
 }

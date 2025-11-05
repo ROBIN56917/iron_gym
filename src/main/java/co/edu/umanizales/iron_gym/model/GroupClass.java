@@ -11,20 +11,20 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClaseGrupal {
+public class GroupClass  {
     private String id;
-    private String nombre;
-    private int cupoMaximo;
-    private LocalTime horario;
-    private Entrenador entrenador;
-    private List<Cliente> clientesInscritos;
+    private String name;
+    private int maxCapacity;
+    private LocalTime schedule;
+    private Trainer trainer;
+    private List<Client> registeredClients;
     
-    public boolean agregarCliente(Cliente cliente) {
-        if (clientesInscritos == null) {
-            clientesInscritos = new ArrayList<>();
+    public boolean addClient(Client client) {
+        if (registeredClients == null) {
+            registeredClients = new ArrayList<>();
         }
-        if (clientesInscritos.size() < cupoMaximo) {
-            return clientesInscritos.add(cliente);
+        if (registeredClients.size() < maxCapacity) {
+            return registeredClients.add(client);
         }
         return false;
     }
