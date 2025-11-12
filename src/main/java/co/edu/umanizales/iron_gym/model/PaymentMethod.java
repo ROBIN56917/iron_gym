@@ -1,7 +1,10 @@
 package co.edu.umanizales.iron_gym.model;
 
+/**
+ * Represents the different payment methods available.
+ */
 public enum PaymentMethod {
-    EFECTIVO,
-    TARJETA,
-    TRANSFERENCIA
+    CASH,
+    CARD,
+    TRANSFER
 }

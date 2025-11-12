@@ -1,34 +1,50 @@
 package co.edu.umanizales.iron_gym.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+/**
+ * Represents a trainer who works at the gym.
+ * Trainers can be assigned to teach group classes.
+ */
+@Getter
+@Setter
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Trainer extends Persona {
-    private List<ClaseGrupal> clasesAsignadas;
-    private String especializacion;
+@AllArgsConstructor
+@SuperBuilder
+public class Trainer extends Person {
+    private List<GroupClass> assignedClasses;
+    private String specialization;
     
-    public Entrenador(String id, String nombre, String email, String telefono, String especializacion) {
-        super(id, nombre, email, telefono);
-        this.especializacion = especializacion;
-        this.clasesAsignadas = new ArrayList<>();
-    }
-    
-    public void agregarClase(ClaseGrupal clase) {
-        if (!clasesAsignadas.contains(clase)) {
-            clasesAsignadas.add(clase);
+    /**
+     * Adds a group class to this trainer's schedule.
+     * @param groupClass the class to add
+     */
+    public void addClass(GroupClass groupClass) {
+        if (assignedClasses == null) {
+            assignedClasses = new ArrayList<>();
+        }
+        if (!assignedClasses.contains(groupClass)) {
+            assignedClasses.add(groupClass);
         }
     }
     
+    /**
+     * Returns the role of this person in the gym system.
+     * @return "TRAINER" as the role
+     */
     @Override
-    public String rol() {
-        return "ENTRENADOR";
+    public String getRole() {
+        return "TRAINER";
     }
 }

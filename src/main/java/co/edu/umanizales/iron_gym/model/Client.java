@@ -9,8 +9,9 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 /**
- * Clase que representa a un cliente del gimnasio.
- * Hereda de Person y agrega información de membresía.
+ * Represents a client of the gym.
+ * Inherits from Person and adds membership information.
+ * Clients can attend classes and have routines.
  */
 @Getter
 @Setter
@@ -22,6 +23,10 @@ import lombok.experimental.SuperBuilder;
 public class Client extends Person {
     private Membership membership;
     
+    /**
+     * Returns the role of this person in the gym system.
+     * @return "CLIENT" as the role
+     */
     @Override
     public String getRole() {
         return "CLIENT";

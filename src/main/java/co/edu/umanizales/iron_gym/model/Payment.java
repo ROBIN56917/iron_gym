@@ -6,14 +6,18 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Represents a payment made by a client.
+ * Tracks payment amount, method, and transaction details.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Payment {
     private String id;
     private double amount;
-    private LocalDateTime date;
+    private LocalDateTime paymentDateTime;
     private PaymentMethod paymentMethod;
-    private String referencia;
+    private String reference;
     private String description;
 }

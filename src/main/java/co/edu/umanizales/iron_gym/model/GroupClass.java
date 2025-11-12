@@ -8,6 +8,11 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a group fitness class offered at the gym.
+ * Classes have a schedule, capacity limit, and assigned trainer.
+ * Clients can register for these classes.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,6 +24,11 @@ public class GroupClass  {
     private Trainer trainer;
     private List<Client> registeredClients;
     
+    /**
+     * Adds a client to this class if there is space available.
+     * @param client the client to add
+     * @return true if the client was added successfully, false if class is full
+     */
     public boolean addClient(Client client) {
         if (registeredClients == null) {
             registeredClients = new ArrayList<>();

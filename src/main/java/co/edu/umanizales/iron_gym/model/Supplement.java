@@ -4,15 +4,19 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Represents nutritional supplements sold at the gym.
+ * Tracks inventory, pricing, and product information.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Supplement {
     private String id;
-    private String nombre;
-    private String marca;
-    private double precio;
-    private String descripcion;
-    private int cantidadDisponible;
-    private String tipo; // Ejemplo: proteina, creatina, vitaminas, etc.
+    private String name;
+    private String brand;
+    private double price;
+    private String description;
+    private int availableQuantity;
+    private String type; // Example: protein, creatine, vitamins, etc.
 }

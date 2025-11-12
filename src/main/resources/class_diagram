@@ -1,52 +1,54 @@
 
 
 +--------------------------------+
-|           Attendance            |
+|           Person               |
 +--------------------------------+
 | - id: String                   |
-| - date: LocalDateTime          |
+| - name: String                 |
+| - email: String                |
+| - phone: String                |
++--------------------------------+
+| + getRole(): String            |
++--------------------------------+
+           △
+           |
+    +------+------+
+    |             |
++-------+---+ +---+--------+
+|   Client   | |  Trainer   |
++-----------+ +------------+
+| - membership: Membership | | - assignedClasses: List<GroupClass> |
++-----------+ | - specialization: String |
+| + getRole(): String | +------------+
++-----------+ | + getRole(): String |
+             | + addClass(): boolean |
+             +------------+
+
++--------------------------------+
+|         Attendance             |
++--------------------------------+
+| - id: String                   |
+| - checkInDateTime: LocalDateTime |
 | - client: Client               |
 | - groupClass: GroupClass       |
 | - present: boolean             |
 +--------------------------------+
 
-
 +--------------------------------+
-|           Client               |
-+--------------------------------+
-| - id: String                   |
-| - name: String                 |
-| - email: String                |
-| - phone: String                |
-| - membershipType: MembershipType |
-+--------------------------------+
-
-
-+--------------------------------+
-|           GroupClass           |
+|         GroupClass             |
 +--------------------------------+
 | - id: String                   |
 | - name: String                 |
 | - maxCapacity: int             |
-| - schedule: String             |
+| - schedule: LocalTime          |
 | - trainer: Trainer             |
 | - registeredClients: List<Client> |
 +--------------------------------+
-
-
-+--------------------------------+
-|           Trainer              |
-+--------------------------------+
-| - id: String                   |
-| - name: String                 |
-| - email: String                |
-| - phone: String                |
-| - specialization: String       |
+| + addClient(): boolean         |
 +--------------------------------+
 
-
 +--------------------------------+
-|           MembershipType       |
+|         Membership             |
 +--------------------------------+
 | - id: String                   |
 | - type: MembershipTypeEnum     |
@@ -55,24 +57,32 @@
 | - price: double                |
 +--------------------------------+
 
-
 +--------------------------------+
-|           MembershipTypeEnum   |
+|     MembershipTypeEnum         |
 +--------------------------------+
-| - BASICA: MembershipTypeEnum   |
-| - PREMIUM: MembershipTypeEnum  |
-| - VIP: MembershipTypeEnum      |
-+--------------------------------+
-
-
-+--------------------------------+
-|           PaymentMethod        |
-+--------------------------------+
-| - EFECTIVO: PaymentMethod      |
-| - TARJETA: PaymentMethod       |
-| - TRANSFERENCIA: PaymentMethod |
+| - BASIC                        |
+| - PREMIUM                      |
+| - VIP                          |
 +--------------------------------+
 
++--------------------------------+
+|         Payment                |
++--------------------------------+
+| - id: String                   |
+| - amount: double               |
+| - paymentDateTime: LocalDateTime |
+| - paymentMethod: PaymentMethod |
+| - reference: String            |
+| - description: String          |
++--------------------------------+
+
++--------------------------------+
+|       PaymentMethod            |
++--------------------------------+
+| - CASH                         |
+| - CARD                         |
+| - TRANSFER                     |
++--------------------------------+
 
 +--------------------------------+
 |           Routine              |
@@ -83,14 +93,114 @@
 | - difficultyLevel: String      |
 | - durationMinutes: int         |
 +--------------------------------+
-
+| + addExercise(): void          |
++--------------------------------+
 
 +--------------------------------+
 |           Exercise             |
 +--------------------------------+
+| - name: String                 |
+| - repetitions: int             |
+| - sets: int                    |
+| - restBetweenSets: String      |
+| - instructions: String         |
+| - muscleGroup: String          |
++--------------------------------+
+
++--------------------------------+
+|          Equipment             |
++--------------------------------+
+| - id: String                   |
+| - type: String                 |
+| - status: EquipmentStatus      |
+| - description: String          |
++--------------------------------+
+
++--------------------------------+
+|       EquipmentStatus          |
++--------------------------------+
+| - ACTIVE                       |
+| - MAINTENANCE                  |
+| - OUT_OF_SERVICE               |
++--------------------------------+
+
++--------------------------------+
+|         Supplement             |
++--------------------------------+
 | - id: String                   |
 | - name: String                 |
+| - brand: String                |
+| - price: double                |
 | - description: String          |
-| - durationMinutes: int         |
-| - difficultyLevel: String      |
+| - availableQuantity: int       |
+| - type: String                 |
 +--------------------------------+
+
++--------------------------------+
+|        Reservation             |
++--------------------------------+
+| - id: String                   |
+| - dateTime: LocalDateTime      |
+| - client: Client               |
+| - groupClass: GroupClass       |
+| - active: boolean              |
+| - createdAt: LocalDateTime     |
++--------------------------------+
+| + cancel(): boolean            |
++--------------------------------+
+
+-------------------------------------------------------------------------------------------------------------
+                          ┌───────────────┐
+                          │    Person     │
+                          ├───────────────┤
+                          │ - id          │
+                          │ - name        │
+                          │ - email       │
+                          │ - phone       │
+                          └───────┬───────┘
+                                  │
+          ┌───────────────────────┼────────────────────────┐
+          │                                                │
+┌────────────────────┐                        ┌────────────────────┐
+│      Client        │                        │      Trainer       │
+├────────────────────┤                        ├────────────────────┤
+│ - membership       │                        │ - specialization   │
+│                    │                        │ - assignedClasses  │
+└──────────┬─────────┘                        └──────────┬─────────┘
+           │                                            │ 1
+           │ 1                                          │
+           ▼ *                                          ▼ *
+   ┌────────────────────┐                      ┌────────────────────┐
+   │    Membership      │                      │    GroupClass      │
+   ├────────────────────┤                      ├────────────────────┤
+   │ - type             │                      │ - trainer          │
+   │ - startDate        │                      │ - registeredClients│
+   └────────────────────┘                      │ - maxCapacity      │
+                                               └──────────┬─────────┘
+                                                          │
+                 ┌────────────────────────────────────────┴─────────────────────────────────────┐
+                 │                                                                               │
+        ┌────────────────────┐                                                        ┌────────────────────┐
+        │     Attendance     │                                                        │    Reservation     │
+        ├────────────────────┤                                                        ├────────────────────┤
+        │ - client           │                                                        │ - client           │
+        │ - groupClass       │                                                        │ - groupClass       │
+        └────────────────────┘                                                        └────────────────────┘
+
+
+┌────────────────────┐                ┌────────────────────┐
+│      Routine       │ 1 -------- *   │      Exercise      │
+├────────────────────┤                ├────────────────────┤
+│ - objective        │                │ - name             │
+│ - difficultyLevel  │                │ - repetitions      │
+└────────────────────┘                └────────────────────┘
+
+
+┌────────────────────┐                ┌────────────────────┐
+│     Equipment      │ 1 -------- 1   │  EquipmentStatus   │
+├────────────────────┤                ├────────────────────┤
+│ - type             │                │ - ACTIVE           │
+│ - description      │                │ - MAINTENANCE      │
+└────────────────────┘                │ - OUT_OF_SERVICE   │
+                                      └────────────────────┘
+

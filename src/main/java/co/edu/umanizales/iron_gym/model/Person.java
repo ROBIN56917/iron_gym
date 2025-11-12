@@ -9,8 +9,9 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- * Clase base que representa a una persona en el sistema del gimnasio.
- * Contiene información común como identificación, nombre, email y teléfono.
+ * Base class that represents a person in the gym system.
+ * Contains common information like identification, name, email and phone.
+ * This is a parent class for Client and Trainer.
  */
 @Getter
 @Setter
@@ -20,8 +21,18 @@ import lombok.ToString;
 @AllArgsConstructor
 @Builder
 public class Person {
+    @EqualsAndHashCode.Include
     private String id;
     private String name;
     private String email;
     private String phone;
+    
+    /**
+     * Returns the role of this person in the gym system.
+     * Child classes should override this method.
+     * @return the role as a string
+     */
+    public String getRole() {
+        return "PERSON";
+    }
 }

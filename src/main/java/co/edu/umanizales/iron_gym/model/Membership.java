@@ -11,8 +11,9 @@ import lombok.ToString;
 import java.time.LocalDate;
 
 /**
- * Clase que representa una membresía en el sistema del gimnasio.
- * Contiene información sobre el tipo de membresía, fechas de vigencia y precio.
+ * Represents a gym membership in the system.
+ * Contains information about the membership type, validity dates and price.
+ * Each client can have one active membership.
  */
 @Getter
 @Setter
@@ -25,7 +26,7 @@ public class Membership {
     @EqualsAndHashCode.Include
     private String id;
     
-    private MembershipType type;
+    private MembershipTypeEnum type;
     private LocalDate startDate;
     private LocalDate endDate;
     private double price;
