@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Proporciona endpoints básicos para verificar el estado de la API.
  */
 @Tag(
-    name = "Iron Gym API",
+    name = "Iron Gym ",
     description = "Endpoints principales para la gestión del gimnasio"
 )
 @RestController
@@ -29,7 +29,7 @@ public class IronGymController {
     )
     @GetMapping("/welcome")
     public ResponseEntity<String> welcome() {
-        return ResponseEntity.ok("Bienvenido a Iron Gym API 🏋️‍♂️");
+        return ResponseEntity.ok("Bienvenido a Iron Gym 🏋️‍♂️");
     }
 
     /**

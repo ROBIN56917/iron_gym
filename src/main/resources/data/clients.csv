@@ -1,0 +1,4 @@
+ID,Name,Email,Phone,Membership Type,Start Date,End Date,Price
+550e8400-e29b-41d4-a716-446655440001,John Doe,john.doe@example.com,555-123-4567,BASIC,2024-01-01,2024-12-31,29.99
+550e8400-e29b-41d4-a716-446655440002,Jane Smith,jane.smith@example.com,555-987-6543,PREMIUM,2024-01-01,2024-12-31,59.99
+550e8400-e29b-41d4-a716-446655440003,Bob Johnson,bob.johnson@example.com,555-555-1234,VIP,2024-01-01,2024-12-31,99.99
