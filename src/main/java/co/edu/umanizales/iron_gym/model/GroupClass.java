@@ -1,41 +1,98 @@
 package co.edu.umanizales.iron_gym.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Represents a group fitness class offered at the gym.
  * Classes have a schedule, capacity limit, and assigned trainer.
- * Clients can register for these classes.
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class GroupClass  {
+public class GroupClass {
     private String id;
     private String name;
     private int maxCapacity;
-    private LocalTime schedule;
+    private String schedule;
     private Trainer trainer;
     private List<Client> registeredClients;
     
-    /**
-     * Adds a client to this class if there is space available.
-     * @param client the client to add
-     * @return true if the client was added successfully, false if class is full
-     */
+    public GroupClass() {
+        this.registeredClients = new ArrayList<>();
+    }
+    
+    public GroupClass(String id, String name, int maxCapacity, String schedule) {
+        this.id = id;
+        this.name = name;
+        this.maxCapacity = maxCapacity;
+        this.schedule = schedule;
+        this.registeredClients = new ArrayList<>();
+    }
+    
+    public String getId() {
+        return id;
+    }
+    
+    public void setId(String id) {
+        this.id = id;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public int getMaxCapacity() {
+        return maxCapacity;
+    }
+    
+    public void setMaxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+    }
+    
+    public String getSchedule() {
+        return schedule;
+    }
+    
+    public void setSchedule(String schedule) {
+        this.schedule = schedule;
+    }
+    
+    public Trainer getTrainer() {
+        return trainer;
+    }
+    
+    public void setTrainer(Trainer trainer) {
+        this.trainer = trainer;
+    }
+    
+    public List<Client> getRegisteredClients() {
+        return registeredClients;
+    }
+    
+    public void setRegisteredClients(List<Client> registeredClients) {
+        this.registeredClients = registeredClients;
+    }
+    
     public boolean addClient(Client client) {
         if (registeredClients == null) {
             registeredClients = new ArrayList<>();
         }
+        
         if (registeredClients.size() < maxCapacity) {
-            return registeredClients.add(client);
+            registeredClients.add(client);
+            return true;
+        } else {
+            return false;
         }
-        return false;
+    }
+    
+    public boolean isFull() {
+        if (registeredClients.size() >= maxCapacity) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

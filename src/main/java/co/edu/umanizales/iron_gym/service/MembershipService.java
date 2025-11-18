@@ -1,355 +1,124 @@
-package co.edu.umanizales.iron_gym.service;
+package co.edu.umanizales.iron_gym.service; // Declara el paquete donde se encuentra esta clase de servicio
 
-import co.edu.umanizales.iron_gym.model.Membership;
-import co.edu.umanizales.iron_gym.model.MembershipTypeEnum;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import co.edu.umanizales.iron_gym.model.Membership; // Importa la clase Membership del paquete model
+import org.springframework.stereotype.Service; // Anotación que marca esta clase como un servicio de Spring
 
-import java.io.*;
-import java.nio.file.*;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.io.*; // Importa todas las clases para manejo de archivos
+import java.time.LocalDate; // Importa la clase para manejar fechas sin hora
+import java.util.ArrayList; // Importa ArrayList para crear listas dinámicas
+import java.util.List; // Importa la interfaz List para trabajar con colecciones
 
-/**
- * Service class for managing gym memberships.
- * Handles business logic and CSV file operations.
- */
-@Service
-public class MembershipService {
-    
-    @Value("${csv.memberships.path:src/main/resources/data/memberships.csv}")
-    private String csvFilePath;
-    
-    private List<Membership> membershipsCache = new ArrayList<>();
-    private long lastModified = 0;
-    
-    /**
-     * Gets all memberships from CSV file.
-     * Uses cache for better performance.
-     * @return List of all memberships
-     */
-    public List<Membership> findAll() {
-        try {
-            File file = new File(csvFilePath);
-            if (!file.exists()) {
-                return new ArrayList<>();
-            }
-            
-            if (file.lastModified() > lastModified) {
-                loadMembershipsFromFile();
-                lastModified = file.lastModified();
-            }
-            
-            return new ArrayList<>(membershipsCache);
-            
-        } catch (Exception e) {
-            System.err.println("Error reading memberships file: " + e.getMessage());
-            return new ArrayList<>();
-        }
+@Service // Anotación que indica que esta es una clase de servicio gestionada por Spring
+public class MembershipService { // Inicio de la clase MembershipService - contiene la lógica de negocio para membresías
+    private List<Membership> memberships; // Lista que almacena todas las membresías del sistema
+    private final String CSV_FILE = "data/memberships.csv"; // Ruta del archivo CSV donde se guardan los datos de membresías
+
+    public MembershipService() { // Constructor de la clase MembershipService
+        this.memberships = new ArrayList<>(); // Inicializa la lista de membresías como ArrayList vacío
+        loadFromCSV(); // Carga los datos de membresías desde el archivo CSV
     }
-    
-    /**
-     * Finds a membership by its ID.
-     * @param id The membership ID to search for
-     * @return Optional containing the membership if found
-     */
-    public Optional<Membership> findById(String id) {
-        try {
-            return findAll().stream()
-                    .filter(membership -> membership.getId().equals(id))
-                    .findFirst();
-        } catch (Exception e) {
-            System.err.println("Error finding membership by ID: " + e.getMessage());
-            return Optional.empty();
-        }
+
+    public List<Membership> getAll() { // Método para obtener todas las membresías
+        return memberships; // Retorna la lista de todas las membresías
     }
-    
-    /**
-     * Finds memberships by type.
-     * @param type The membership type to filter by
-     * @return List of memberships with specified type
-     */
-    public List<Membership> findByType(MembershipTypeEnum type) {
-        try {
-            return findAll().stream()
-                    .filter(membership -> membership.getType().equals(type))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            System.err.println("Error finding memberships by type: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-    
-    /**
-     * Finds active memberships (valid today).
-     * @return List of active memberships
-     */
-    public List<Membership> findActiveMemberships() {
-        try {
-            LocalDate today = LocalDate.now();
-            return findAll().stream()
-                    .filter(membership -> membership.getStartDate() != null)
-                    .filter(membership -> membership.getEndDate() != null)
-                    .filter(membership -> 
-                        !today.isBefore(membership.getStartDate()) && 
-                        !today.isAfter(membership.getEndDate()))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            System.err.println("Error finding active memberships: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-    
-    /**
-     * Finds expired memberships.
-     * @return List of expired memberships
-     */
-    public List<Membership> findExpiredMemberships() {
-        try {
-            LocalDate today = LocalDate.now();
-            return findAll().stream()
-                    .filter(membership -> membership.getEndDate() != null)
-                    .filter(membership -> today.isAfter(membership.getEndDate()))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            System.err.println("Error finding expired memberships: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-    
-    /**
-     * Saves a membership to CSV file.
-     * Handles both create and update operations.
-     * @param membership The membership to save
-     * @return The saved membership
-     * @throws IllegalArgumentException if membership data is invalid
-     */
-    public Membership save(Membership membership) throws IllegalArgumentException {
-        validateMembership(membership);
-        
-        List<Membership> memberships = findAll();
-        
-        try {
-            if (membership.getId() == null || membership.getId().isEmpty()) {
-                membership.setId(UUID.randomUUID().toString());
-            } else {
-                memberships.removeIf(m -> m.getId().equals(membership.getId()));
-            }
-            
-            memberships.add(membership);
-            saveAllToFile(memberships);
-            
-            membershipsCache = new ArrayList<>(memberships);
-            
-            return membership;
-            
-        } catch (Exception e) {
-            System.err.println("Error saving membership: " + e.getMessage());
-            throw new RuntimeException("Failed to save membership: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * Deletes a membership by ID.
-     * @param id The ID of the membership to delete
-     * @return true if membership was deleted, false if not found
-     */
-    public boolean delete(String id) {
-        List<Membership> memberships = findAll();
-        boolean removed = memberships.removeIf(membership -> membership.getId().equals(id));
-        
-        if (removed) {
-            try {
-                saveAllToFile(memberships);
-                membershipsCache = new ArrayList<>(memberships);
-            } catch (Exception e) {
-                System.err.println("Error deleting membership: " + e.getMessage());
-                throw new RuntimeException("Failed to delete membership: " + e.getMessage(), e);
+
+    public Membership getById(String id) { // Método para buscar membresía por ID
+        for (Membership membership : memberships) { // Recorre la lista de membresías
+            if (membership.getId().equals(id)) { // Compara el ID de cada membresía con el ID buscado
+                return membership; // Retorna la membresía encontrada
             }
         }
-        
-        return removed;
+        return null; // Retorna null si no se encontró ninguna membresía con ese ID
     }
-    
-    /**
-     * Calculates the price for a membership type.
-     * @param type The membership type
-     * @return The price for the membership type
-     */
-    public double calculatePrice(MembershipTypeEnum type) {
-        switch (type) {
-            case BASIC:
-                return 29.99;
-            case PREMIUM:
-                return 59.99;
-            case VIP:
-                return 99.99;
-            default:
-                return 0.0;
-        }
+
+    public Membership create(Membership membership) { // Método para crear una nueva membresía
+        memberships.add(membership); // Agrega la nueva membresía a la lista
+        saveToCSV(); // Guarda los cambios en el archivo CSV
+        return membership; // Retorna la membresía creada
     }
-    
-    /**
-     * Creates a new membership with automatic pricing.
-     * @param type The membership type
-     * @param startDate The start date
-     * @param durationMonths Duration in months
-     * @return Created membership
-     */
-    public Membership createMembership(MembershipTypeEnum type, LocalDate startDate, int durationMonths) {
-        try {
-            Membership membership = new Membership();
-            membership.setType(type);
-            membership.setStartDate(startDate);
-            membership.setEndDate(startDate.plusMonths(durationMonths));
-            membership.setPrice(calculatePrice(type) * durationMonths);
-            
-            return save(membership);
-            
-        } catch (Exception e) {
-            System.err.println("Error creating membership: " + e.getMessage());
-            throw new RuntimeException("Failed to create membership: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * Validates membership data before saving.
-     * @param membership The membership to validate
-     * @throws IllegalArgumentException if validation fails
-     */
-    private void validateMembership(Membership membership) throws IllegalArgumentException {
-        if (membership == null) {
-            throw new IllegalArgumentException("Membership cannot be null");
-        }
-        
-        if (membership.getType() == null) {
-            throw new IllegalArgumentException("Membership type is required");
-        }
-        
-        if (membership.getStartDate() == null) {
-            throw new IllegalArgumentException("Membership start date is required");
-        }
-        
-        if (membership.getEndDate() == null) {
-            throw new IllegalArgumentException("Membership end date is required");
-        }
-        
-        if (membership.getStartDate().isAfter(membership.getEndDate())) {
-            throw new IllegalArgumentException("Membership start date cannot be after end date");
-        }
-        
-        if (membership.getPrice() < 0) {
-            throw new IllegalArgumentException("Membership price cannot be negative");
-        }
-    }
-    
-    /**
-     * Loads memberships from CSV file into cache.
-     */
-    private void loadMembershipsFromFile() {
-        List<Membership> memberships = new ArrayList<>();
-        File file = new File(csvFilePath);
-        
-        if (!file.exists()) {
-            membershipsCache = memberships;
-            return;
-        }
-        
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            boolean isFirstLine = true;
-            
-            while ((line = reader.readLine()) != null) {
-                if (isFirstLine) {
-                    isFirstLine = false;
-                    continue;
-                }
-                
-                if (!line.trim().isEmpty()) {
-                    try {
-                        Membership membership = parseMembershipFromCsv(line);
-                        if (membership != null) {
-                            memberships.add(membership);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error parsing membership line: " + line + " - " + e.getMessage());
-                    }
-                }
+
+    public Membership update(String id, Membership updatedMembership) { // Método para actualizar una membresía existente
+        for (int i = 0; i < memberships.size(); i++) { // Recorre la lista de membresías por índice
+            if (memberships.get(i).getId().equals(id)) { // Si encuentra la membresía por ID
+                updatedMembership.setId(id); // Mantiene el mismo ID en la membresía actualizada
+                memberships.set(i, updatedMembership); // Reemplaza la membresía en la posición i con la actualizada
+                saveToCSV(); // Guarda los cambios en el archivo CSV
+                return updatedMembership; // Retorna la membresía actualizada
             }
-            
-            membershipsCache = memberships;
-            
-        } catch (IOException e) {
-            System.err.println("Error reading memberships file: " + e.getMessage());
-            membershipsCache = new ArrayList<>();
         }
+        return null; // Retorna null si no encontró la membresía para actualizar
     }
-    
-    /**
-     * Saves all memberships to CSV file.
-     * @param memberships List of memberships to save
-     */
-    private void saveAllToFile(List<Membership> memberships) {
-        File file = new File(csvFilePath);
-        
+
+    public boolean delete(String id) { // Método para eliminar una membresía por ID
+        for (int i = 0; i < memberships.size(); i++) { // Recorre la lista de membresías por índice
+            if (memberships.get(i).getId().equals(id)) { // Si encuentra la membresía por ID
+                memberships.remove(i);
+                saveToCSV();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<Membership> getActiveMemberships() {
+        List<Membership> result = new ArrayList<>();
+        for (Membership membership : memberships) {
+            if (membership.isActive()) {
+                result.add(membership);
+            }
+        }
+        return result;
+    }
+
+    private void saveToCSV() {
         try {
+            File file = new File(CSV_FILE);
             file.getParentFile().mkdirs();
             
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                writer.write("ID,Type,Start Date,End Date,Price\n");
-                
-                for (Membership membership : memberships) {
-                    writer.write(membershipToCsvString(membership));
-                    writer.newLine();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            writer.write("id,type,startDate,endDate,price\n");
+            
+            for (Membership membership : memberships) {
+                writer.write(membership.getId() + "," + 
+                           membership.getType() + "," + 
+                           membership.getStartDate() + "," + 
+                           membership.getEndDate() + "," + 
+                           membership.getPrice() + "\n");
+            }
+            
+            writer.close();
+        } catch (IOException e) { // Captura excepciones de entrada/salida
+            e.printStackTrace(); // Imprime el error en la consola para depuración
+        }
+    }
+
+    private void loadFromCSV() { // Método privado para cargar datos desde archivo CSV
+        try { // Inicia bloque try para manejar posibles excepciones de archivo
+            File file = new File(CSV_FILE); // Crea un objeto File con la ruta del CSV
+            if (!file.exists()) { // Si el archivo no existe
+                return; // Sale del método sin hacer nada más
+            }
+            
+            BufferedReader reader = new BufferedReader(new FileReader(file)); // Crea lector para el archivo
+            String line = reader.readLine(); // Lee y salta la línea de cabecera
+            
+            while ((line = reader.readLine()) != null) { // Mientras haya líneas por leer
+                String[] data = line.split(","); // Divide la línea por comas para obtener los datos
+                if (data.length == 5) { // Verifica que la línea tenga exactamente 5 campos
+                    Membership membership = new Membership( // Crea membresía con datos
+                        data[0], // ID de la membresía
+                        data[1], // Tipo de membresía
+                        LocalDate.parse(data[2]), // Fecha de inicio parseada
+                        LocalDate.parse(data[3]), // Fecha de fin parseada
+                        Double.parseDouble(data[4]) // Precio convertido a double
+                    );
+                    memberships.add(membership); // Agrega la membresía a la lista
                 }
             }
             
-        } catch (IOException e) {
-            System.err.println("Error writing memberships file: " + e.getMessage());
-            throw new RuntimeException("Failed to save memberships to file", e);
+            reader.close(); // Cierra el lector del archivo
+        } catch (IOException e) { // Captura excepciones de entrada/salida
+            e.printStackTrace(); // Imprime el error en la consola para depuración
         }
     }
-    
-    /**
-     * Converts a membership to CSV string format.
-     * @param membership The membership to convert
-     * @return CSV string representation
-     */
-    private String membershipToCsvString(Membership membership) {
-        return String.join(",",
-            membership.getId(),
-            membership.getType().toString(),
-            membership.getStartDate().toString(),
-            membership.getEndDate().toString(),
-            String.valueOf(membership.getPrice())
-        );
-    }
-    
-    /**
-     * Parses a membership from CSV string.
-     * @param csvLine The CSV line to parse
-     * @return Parsed Membership object
-     */
-    private Membership parseMembershipFromCsv(String csvLine) {
-        try {
-            String[] parts = csvLine.split(",");
-            if (parts.length < 5) {
-                return null;
-            }
-            
-            Membership membership = new Membership();
-            membership.setId(parts[0].trim());
-            membership.setType(MembershipTypeEnum.valueOf(parts[1].trim()));
-            membership.setStartDate(LocalDate.parse(parts[2].trim()));
-            membership.setEndDate(LocalDate.parse(parts[3].trim()));
-            membership.setPrice(Double.parseDouble(parts[4].trim()));
-            
-            return membership;
-            
-        } catch (Exception e) {
-            System.err.println("Error parsing membership from CSV: " + e.getMessage());
-            return null;
-        }
-    }
-}
+} // Fin de la clase MembershipService

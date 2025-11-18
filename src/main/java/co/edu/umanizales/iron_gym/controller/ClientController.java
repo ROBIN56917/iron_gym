@@ -1,253 +1,64 @@
-package co.edu.umanizales.iron_gym.controller;
+package co.edu.umanizales.iron_gym.controller; // Declara el paquete donde se encuentran los controladores REST
 
-import co.edu.umanizales.iron_gym.model.Client;
-import co.edu.umanizales.iron_gym.service.ClientService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import co.edu.umanizales.iron_gym.model.Client; // Importa la clase Client del paquete model
+import co.edu.umanizales.iron_gym.service.ClientService; // Importa el servicio de clientes
+import org.springframework.beans.factory.annotation.Autowired; // Importa anotación para inyección de dependencias
+import org.springframework.http.HttpStatus; // Importa códigos de estado HTTP
+import org.springframework.http.ResponseEntity; // Importa clase para respuestas HTTP
+import org.springframework.web.bind.annotation.*; // Importa anotaciones para controladores REST
 
-import java.util.List;
-import java.util.Optional;
+import java.util.List; // Importa la interfaz List para trabajar con colecciones
 
-/**
- * REST Controller for managing clients.
- * Provides endpoints for CRUD operations and CSV export.
- */
-@RestController
-@RequestMapping("/api/clients")
-@CrossOrigin(origins = "*") // Allows requests from any origin
-public class ClientController {
+@RestController // Anotación que marca esta clase como un controlador REST
+@RequestMapping("/api/clients") // Define la ruta base para todos los endpoints de este controlador
+public class ClientController { // Inicio de la clase ClientController - maneja peticiones HTTP para clientes
     
-    @Autowired
-    private ClientService clientService;
-    
-    /**
-     * Gets all clients.
-     * HTTP GET: /api/clients
-     * @return List of all clients
-     */
-    @GetMapping
-    public ResponseEntity<List<Client>> getAllClients() {
-        try {
-            List<Client> clients = clientService.findAll();
-            return ResponseEntity.ok(clients);
-        } catch (Exception e) {
-            System.err.println("Error getting all clients: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    @Autowired // Anotación para inyección automática del servicio
+    private ClientService clientService; // Servicio que contiene la lógica de negocio para clientes
+
+    @GetMapping // Anotación que mapea peticiones HTTP GET a este método
+    public ResponseEntity<List<Client>> getAll() { // Método para obtener todos los clientes
+        return ResponseEntity.ok(clientService.getAll()); // Retorna respuesta HTTP 200 con la lista de clientes
+    }
+
+    @GetMapping("/{id}") // Anotación que mapea peticiones HTTP GET con parámetro de ruta
+    public ResponseEntity<Client> getById(@PathVariable String id) { // Método para obtener cliente por ID
+        Client client = clientService.getById(id); // Busca cliente por ID usando el servicio
+        if (client != null) { // Si se encontró el cliente
+            return ResponseEntity.ok(client); // Retorna respuesta HTTP 200 con el cliente encontrado
+        } else { // Si no se encontró el cliente
+            return ResponseEntity.notFound().build(); // Retorna respuesta HTTP 404 (no encontrado)
         }
     }
-    
-    /**
-     * Gets a client by ID.
-     * HTTP GET: /api/clients/{id}
-     * @param id The client ID
-     * @return Client if found, 404 if not found
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<Client> getClientById(@PathVariable String id) {
-        try {
-            if (id == null || id.trim().isEmpty()) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            Optional<Client> client = clientService.findById(id);
-            if (client.isPresent()) {
-                return ResponseEntity.ok(client.get());
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            System.err.println("Error getting client by ID: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
+    @GetMapping("/with-membership") // Anotación que mapea peticiones HTTP GET a /with-membership
+    public ResponseEntity<List<Client>> getClientsWithMembership() { // Método para obtener clientes con membresía
+        return ResponseEntity.ok(clientService.getClientsWithMembership()); // Retorna respuesta HTTP 200 con clientes con membresía
+    }
+
+    @PostMapping // Anotación que mapea peticiones HTTP POST a este método
+    public ResponseEntity<Client> create(@RequestBody Client client) { // Método para crear nuevo cliente
+        Client created = clientService.create(client); // Crea el cliente usando el servicio
+        return ResponseEntity.status(HttpStatus.CREATED).body(created); // Retorna respuesta HTTP 201 con el cliente creado
+    }
+
+    @PutMapping("/{id}") // Anotación que mapea peticiones HTTP PUT con parámetro de ruta
+    public ResponseEntity<Client> update(@PathVariable String id, @RequestBody Client client) { // Método para actualizar cliente
+        Client updated = clientService.update(id, client); // Actualiza el cliente usando el servicio
+        if (updated != null) { // Si se actualizó correctamente
+            return ResponseEntity.ok(updated); // Retorna respuesta HTTP 200 con el cliente actualizado
+        } else { // Si no se encontró el cliente para actualizar
+            return ResponseEntity.notFound().build(); // Retorna respuesta HTTP 404 (no encontrado)
         }
     }
-    
-    /**
-     * Gets clients by membership type.
-     * HTTP GET: /api/clients/membership/{type}
-     * @param type The membership type (BASIC, PREMIUM, VIP)
-     * @return List of clients with specified membership type
-     */
-    @GetMapping("/membership/{type}")
-    public ResponseEntity<List<Client>> getClientsByMembershipType(@PathVariable String type) {
-        try {
-            if (type == null || type.trim().isEmpty()) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            List<Client> clients = clientService.findByMembershipType(type.toUpperCase());
-            return ResponseEntity.ok(clients);
-        } catch (Exception e) {
-            System.err.println("Error getting clients by membership type: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
+    @DeleteMapping("/{id}") // Anotación que mapea peticiones HTTP DELETE con parámetro de ruta
+    public ResponseEntity<Void> delete(@PathVariable String id) { // Método para eliminar cliente por ID
+        boolean deleted = clientService.delete(id); // Elimina el cliente usando el servicio
+        if (deleted) { // Si se eliminó correctamente
+            return ResponseEntity.noContent().build(); // Retorna respuesta HTTP 204 (sin contenido)
+        } else { // Si no se encontró el cliente para eliminar
+            return ResponseEntity.notFound().build(); // Retorna respuesta HTTP 404 (no encontrado)
         }
     }
-    
-    /**
-     * Creates a new client.
-     * HTTP POST: /api/clients
-     * @param client The client to create
-     * @return Created client with 201 status, or error response
-     */
-    @PostMapping
-    public ResponseEntity<Client> createClient(@RequestBody Client client) {
-        try {
-            // Validate input
-            if (client == null) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            // Save client (service will validate)
-            Client savedClient = clientService.save(client);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedClient);
-            
-        } catch (IllegalArgumentException e) {
-            System.err.println("Validation error creating client: " + e.getMessage());
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            System.err.println("Error creating client: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-    
-    /**
-     * Updates an existing client.
-     * HTTP PUT: /api/clients/{id}
-     * @param id The client ID to update
-     * @param client The updated client data
-     * @return Updated client, or error response
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<Client> updateClient(@PathVariable String id, @RequestBody Client client) {
-        try {
-            // Validate input
-            if (id == null || id.trim().isEmpty() || client == null) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            // Check if client exists
-            Optional<Client> existingClient = clientService.findById(id);
-            if (existingClient.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            // Set ID and update
-            client.setId(id);
-            Client updatedClient = clientService.save(client);
-            return ResponseEntity.ok(updatedClient);
-            
-        } catch (IllegalArgumentException e) {
-            System.err.println("Validation error updating client: " + e.getMessage());
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            System.err.println("Error updating client: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-    
-    /**
-     * Deletes a client by ID.
-     * HTTP DELETE: /api/clients/{id}
-     * @param id The client ID to delete
-     * @return 204 if deleted, 404 if not found, error response otherwise
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClient(@PathVariable String id) {
-        try {
-            if (id == null || id.trim().isEmpty()) {
-                return ResponseEntity.badRequest().build();
-            }
-            
-            boolean deleted = clientService.delete(id);
-            if (deleted) {
-                return ResponseEntity.noContent().build();
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            System.err.println("Error deleting client: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-    
-    /**
-     * Exports all clients to CSV format.
-     * HTTP GET: /api/clients/export/csv
-     * @return CSV file for download
-     */
-    @GetMapping("/export/csv")
-    public ResponseEntity<String> exportClientsToCsv() {
-        try {
-            String csvContent = clientService.exportToCsv();
-            
-            return ResponseEntity.ok()
-                    .header("Content-Type", "text/csv")
-                    .header("Content-Disposition", "attachment; filename=clients.csv")
-                    .body(csvContent);
-                    
-        } catch (Exception e) {
-            System.err.println("Error exporting clients to CSV: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-    
-    /**
-     * Gets statistics about clients.
-     * HTTP GET: /api/clients/stats
-     * @return Statistics about clients
-     */
-    @GetMapping("/stats")
-    public ResponseEntity<ClientStats> getClientStatistics() {
-        try {
-            List<Client> allClients = clientService.findAll();
-            
-            ClientStats stats = new ClientStats();
-            stats.setTotalClients(allClients.size());
-            
-            // Count by membership type
-            long basicCount = allClients.stream()
-                    .filter(c -> c.getMembership() != null && c.getMembership().getType().toString().equals("BASIC"))
-                    .count();
-            long premiumCount = allClients.stream()
-                    .filter(c -> c.getMembership() != null && c.getMembership().getType().toString().equals("PREMIUM"))
-                    .count();
-            long vipCount = allClients.stream()
-                    .filter(c -> c.getMembership() != null && c.getMembership().getType().toString().equals("VIP"))
-                    .count();
-            
-            stats.setBasicMemberships((int) basicCount);
-            stats.setPremiumMemberships((int) premiumCount);
-            stats.setVipMemberships((int) vipCount);
-            
-            return ResponseEntity.ok(stats);
-            
-        } catch (Exception e) {
-            System.err.println("Error getting client statistics: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-    
-    /**
-     * Inner class for client statistics.
-     */
-    public static class ClientStats {
-        private int totalClients;
-        private int basicMemberships;
-        private int premiumMemberships;
-        private int vipMemberships;
-        
-        // Getters and Setters
-        public int getTotalClients() { return totalClients; }
-        public void setTotalClients(int totalClients) { this.totalClients = totalClients; }
-        
-        public int getBasicMemberships() { return basicMemberships; }
-        public void setBasicMemberships(int basicMemberships) { this.basicMemberships = basicMemberships; }
-        
-        public int getPremiumMemberships() { return premiumMemberships; }
-        public void setPremiumMemberships(int premiumMemberships) { this.premiumMemberships = premiumMemberships; }
-        
-        public int getVipMemberships() { return vipMemberships; }
-        public void setVipMemberships(int vipMemberships) { this.vipMemberships = vipMemberships; }
-    }
-}
+} // Fin de la clase ClientController
