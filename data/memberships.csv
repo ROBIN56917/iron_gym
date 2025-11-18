@@ -1,0 +1,3 @@
+id,personId,type,startDate,endDate,price
+M01,01,BASIC,2025-12-01,2026-12-01,400.000
+M02,02,BASIC,2025-12-01,2026-12-01,400.555

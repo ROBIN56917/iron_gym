@@ -36,10 +36,19 @@ public class MembershipController { // Inicio de la clase MembershipController -
         return ResponseEntity.ok(membershipService.getActiveMemberships()); // Retorna respuesta HTTP 200 con membresías activas
     }
 
+    @GetMapping("/types") // Endpoint para listar los nombres/tipos de membresía existentes
+    public ResponseEntity<List<String>> getTypes() {
+        return ResponseEntity.ok(membershipService.getTypes());
+    }
+
     @PostMapping // Anotación que mapea peticiones HTTP POST a este método
     public ResponseEntity<Membership> create(@RequestBody Membership membership) { // Método para crear nueva membresía
-        Membership created = membershipService.create(membership); // Crea la membresía usando el servicio
-        return ResponseEntity.status(HttpStatus.CREATED).body(created); // Retorna respuesta HTTP 201 con la membresía creada
+        try {
+            Membership created = membershipService.create(membership); // Crea la membresía usando el servicio
+            return ResponseEntity.status(HttpStatus.CREATED).body(created); // Retorna respuesta HTTP 201 con la membresía creada
+        } catch (IllegalArgumentException ex) { // ID duplicado u otra validación
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
     @PutMapping("/{id}") // Anotación que mapea peticiones HTTP PUT con parámetro de ruta

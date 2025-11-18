@@ -1,7 +1,12 @@
 package co.edu.umanizales.iron_gym.controller; // Declara el paquete donde se encuentra esta clase controladora
 
 import co.edu.umanizales.iron_gym.model.Person; // Importa la clase Person del paquete model
+import co.edu.umanizales.iron_gym.model.Membership;
+import co.edu.umanizales.iron_gym.model.GroupClass;
+import co.edu.umanizales.iron_gym.model.Trainer;
 import co.edu.umanizales.iron_gym.service.PersonService; // Importa la clase PersonService del paquete service
+import co.edu.umanizales.iron_gym.service.MembershipService;
+import co.edu.umanizales.iron_gym.service.GroupClassService;
 import jakarta.validation.Valid; // Importa la anotación Valid para activar validaciones
 import org.springframework.beans.factory.annotation.Autowired; // Para inyectar dependencias automáticamente
 import org.springframework.http.HttpStatus; // Para usar códigos de estado HTTP
@@ -13,6 +18,8 @@ import org.springframework.web.bind.annotation.*; // Importa todas las anotacion
 import java.util.HashMap; // Para crear mapas clave-valor para respuestas de error
 import java.util.List; // Para trabajar con listas de personas
 import java.util.Map; // Para manejar colecciones clave-valor genéricas
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @RestController // Anotación que indica que esta es una clase controladora REST
 @RequestMapping("/api/persons") // Define la URL base para todos los endpoints de este controlador
@@ -20,6 +27,12 @@ public class PersonController { // Inicio de la clase PersonController - maneja 
     
     @Autowired // Anotación para inyectar automáticamente una instancia de PersonService
     private PersonService personService; // Servicio que contiene la lógica de negocio para personas
+    
+    @Autowired
+    private MembershipService membershipService;
+    
+    @Autowired
+    private GroupClassService groupClassService;
 
     @GetMapping // Anotación que mapea peticiones HTTP GET a este método
     public ResponseEntity<List<Person>> getAll() { // Método para obtener todas las personas
@@ -138,4 +151,63 @@ public class PersonController { // Inicio de la clase PersonController - maneja 
         }
         return true; // Si todos los dígitos son iguales, retorna true
     }
-} // Fin de la clase PersonController
+
+    // Endpoint: obtener la membresía asociada al ID de persona
+    @GetMapping("/{id}/membership")
+    public ResponseEntity<Membership> getMembershipByPerson(@PathVariable String id) {
+        Person person = personService.getById(id);
+        if (person == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Membership membership = membershipService.getByPersonId(id);
+        if (membership == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(membership);
+    }
+
+    // Endpoint: obtener las clases donde está registrado el ID de persona
+    @GetMapping("/{id}/classes")
+    public ResponseEntity<List<GroupClass>> getClassesByPerson(@PathVariable String id) {
+        Person person = personService.getById(id);
+        if (person == null) {
+            return ResponseEntity.notFound().build();
+        }
+        List<GroupClass> classes = new ArrayList<>();
+        for (GroupClass gc : groupClassService.getAll()) {
+            if (gc.getRegisteredClients() != null) {
+                boolean enrolled = gc.getRegisteredClients().stream().anyMatch(c -> id.equals(c.getId()));
+                if (enrolled) {
+                    classes.add(gc);
+                }
+            }
+        }
+        return ResponseEntity.ok(classes);
+    }
+
+    // Endpoint: obtener entrenadores de las clases donde está el ID de persona (sin duplicados)
+    @GetMapping("/{id}/trainers")
+    public ResponseEntity<List<Trainer>> getTrainersByPerson(@PathVariable String id) {
+        Person person = personService.getById(id);
+        if (person == null) {
+            return ResponseEntity.notFound().build();
+        }
+        List<GroupClass> classes = new ArrayList<>();
+        for (GroupClass gc : groupClassService.getAll()) {
+            if (gc.getRegisteredClients() != null) {
+                boolean enrolled = gc.getRegisteredClients().stream().anyMatch(c -> id.equals(c.getId()));
+                if (enrolled) {
+                    classes.add(gc);
+                }
+            }
+        }
+        List<Trainer> trainers = classes.stream()
+                .map(GroupClass::getTrainer)
+                .filter(t -> t != null)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(Trainer::getId, t -> t, (a, b) -> a),
+                        m -> new ArrayList<>(m.values())));
+        return ResponseEntity.ok(trainers);
+    }
+}
+ // Fin de la clase PersonController

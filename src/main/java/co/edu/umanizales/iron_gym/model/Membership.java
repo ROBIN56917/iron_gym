@@ -8,6 +8,7 @@ import java.time.LocalDate;
  */
 public class Membership {
     private String id;
+    private String personId; // Referencia al ID de la persona dueña de la membresía
     private String type;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -16,8 +17,9 @@ public class Membership {
     public Membership() {
     }
     
-    public Membership(String id, String type, LocalDate startDate, LocalDate endDate, double price) {
+    public Membership(String id, String personId, String type, LocalDate startDate, LocalDate endDate, double price) {
         this.id = id;
+        this.personId = personId;
         this.type = type;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -30,6 +32,14 @@ public class Membership {
     
     public void setId(String id) {
         this.id = id;
+    }
+    
+    public String getPersonId() {
+        return personId;
+    }
+    
+    public void setPersonId(String personId) {
+        this.personId = personId;
     }
     
     public String getType() {

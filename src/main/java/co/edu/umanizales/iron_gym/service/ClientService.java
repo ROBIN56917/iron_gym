@@ -38,19 +38,22 @@ public class ClientService { // Inicio de la clase ClientService - contiene la l
         return client; // Retorna el cliente creado
     }
     
-    private String generateNextId() { // Método privado para generar el siguiente ID disponible
+    private String generateNextId() { // Método privado para generar el siguiente ID disponible con prefijo C
         int maxId = 0; // Inicializa el máximo ID encontrado en 0
         for (Client client : clients) { // Recorre todos los clientes existentes
             try {
-                int idNum = Integer.parseInt(client.getId()); // Convierte el ID a número entero
+                // Extrae solo la parte numérica del ID (eliminando el prefijo 'C' si existe)
+                String idStr = client.getId().replaceAll("^C", "");
+                int idNum = Integer.parseInt(idStr); // Convierte el ID a número entero
                 if (idNum > maxId) { // Si el ID actual es mayor que el máximo encontrado
                     maxId = idNum; // Actualiza el máximo ID
                 }
             } catch (NumberFormatException e) { // Si el ID no es un número válido
-                // Ignorar IDs que no sean números
+                // Ignorar IDs que no sigan el formato esperado
             }
         }
-        return String.format("%02d", maxId + 1); // Formatea el nuevo ID con 2 dígitos
+        // Formatea el nuevo ID con prefijo 'C' y 2 dígitos (C01, C02, ...)
+        return "C" + String.format("%02d", maxId + 1);
     }
 
     public Client update(String id, Client updatedClient) { // Método para actualizar un cliente existente
