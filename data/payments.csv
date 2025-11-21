@@ -1,0 +1,4 @@
+id,amount,dateTime,paymentMethod
+P001,100000.0,null,null
+P001,200.0,null,null
+P001,200000.0,null,null

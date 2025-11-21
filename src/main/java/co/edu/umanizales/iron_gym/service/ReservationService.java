@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service; // Anotación que marca esta clas
 
 import java.io.*; // Importa todas las clases para manejo de archivos
 import java.time.LocalDateTime; // Importa la clase para manejar fechas y horas
+import java.time.format.DateTimeParseException; // Manejo de errores al parsear fechas
 import java.util.ArrayList; // Importa ArrayList para crear listas dinámicas
 import java.util.List; // Importa la interfaz List para trabajar con colecciones
 
@@ -91,11 +92,27 @@ public class ReservationService { // Inicio de la clase ReservationService - con
             
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(",");
-                if (data.length == 2) {
+                if (data.length >= 2) {
+                    String id = data[0] != null ? data[0].trim() : "";
+                    String dateStr = data[1] != null ? data[1].trim() : "";
+
+                    if (id.isEmpty() || "null".equalsIgnoreCase(id)) {
+                        continue; // ID requerido
+                    }
+
+                    LocalDateTime dt = null;
+                    if (!dateStr.isEmpty() && !"null".equalsIgnoreCase(dateStr)) {
+                        try {
+                            dt = LocalDateTime.parse(dateStr);
+                        } catch (DateTimeParseException ex) {
+                            continue; // Fecha inválida, omite la fila
+                        }
+                    }
+
                     Reservation reservation = new Reservation(
-                        data[0], 
-                        LocalDateTime.parse(data[1]), 
-                        null, 
+                        id,
+                        dt,
+                        null,
                         null
                     );
                     reservations.add(reservation);

@@ -1,16 +1,18 @@
-package co.edu.umanizales.iron_gym.service; // Declara el paquete donde se encuentra esta clase de servicio
+package co.edu.umanizales.iron_gym.service;
 
-import co.edu.umanizales.iron_gym.model.Equipment; // Importa la clase Equipment del paquete model
-import org.springframework.stereotype.Service; // Anotación que marca esta clase como un servicio de Spring
+import co.edu.umanizales.iron_gym.model.Equipment;
+import org.springframework.stereotype.Service;
 
-import java.io.*; // Importa todas las clases para manejo de archivos
-import java.util.ArrayList; // Importa ArrayList para crear listas dinámicas
-import java.util.List; // Importa la interfaz List para trabajar con colecciones
+import java.io.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service // Anotación que indica que esta es una clase de servicio gestionada por Spring
 public class EquipmentService { // Inicio de la clase EquipmentService - contiene la lógica de negocio para equipos
-    private List<Equipment> equipments; // Lista que almacena todos los equipos del sistema
-    private final String CSV_FILE = "data/equipments.csv"; // Ruta del archivo CSV donde se guardan los datos de equipos
+    private List<Equipment> equipments;
+    private final String CSV_FILE = "data/equipments.csv";
+    private static final String ID_PREFIX = "EQ";
+    private int nextIdNumber = 1;
 
     public EquipmentService() { // Constructor de la clase EquipmentService
         this.equipments = new ArrayList<>(); // Inicializa la lista de equipos como ArrayList vacío
@@ -30,10 +32,43 @@ public class EquipmentService { // Inicio de la clase EquipmentService - contien
         return null; // Retorna null si no se encontró ningún equipo con ese ID
     }
 
-    public Equipment create(Equipment equipment) { // Método para crear un nuevo equipo
-        equipments.add(equipment); // Agrega el nuevo equipo a la lista
-        saveToCSV(); // Guarda los cambios en el archivo CSV
-        return equipment; // Retorna el equipo creado
+    public Equipment create(Equipment equipment) {
+        // Verificar si ya existe un equipo con el mismo ID
+        if (equipment.getId() != null && !equipment.getId().isEmpty()) {
+            // Si se proporciona un ID, verificar que no exista
+            if (equipments.stream().anyMatch(e -> e.getId().equals(equipment.getId()))) {
+                throw new IllegalArgumentException("Ya existe un equipo con el ID: " + equipment.getId());
+            }
+        } else {
+            // Generar nuevo ID secuencial
+            String newId = generateNextId();
+            equipment.setId(newId);
+        }
+        
+        equipments.add(equipment);
+        saveToCSV();
+        return equipment;
+    }
+    
+    private String generateNextId() {
+        // Encontrar el número más alto de ID existente
+        int maxId = equipments.stream()
+            .map(Equipment::getId)
+            .filter(id -> id.startsWith(ID_PREFIX))
+            .map(id -> id.substring(ID_PREFIX.length()))
+            .mapToInt(id -> {
+                try {
+                    return Integer.parseInt(id);
+                } catch (NumberFormatException e) {
+                    return 0;
+                }
+            })
+            .max()
+            .orElse(0);
+            
+        // Usar el siguiente número disponible
+        int nextId = maxId + 1;
+        return String.format("%s%03d", ID_PREFIX, nextId);
     }
 
     public Equipment update(String id, Equipment updatedEquipment) { // Método para actualizar un equipo existente
@@ -99,15 +134,35 @@ public class EquipmentService { // Inicio de la clase EquipmentService - contien
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line = reader.readLine(); // Skip header
             
+            // Limpiar la lista actual
+            if (equipments == null) {
+                equipments = new ArrayList<>();
+            } else {
+                equipments.clear();
+            }
+            
+            // Conjunto para verificar IDs duplicados
+            Set<String> existingIds = new HashSet<>();
+            
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(",");
-                if (data.length == 3) {
-                    Equipment equipment = new Equipment(data[0], data[1], data[2]);
+                if (data.length >= 3) {
+                    String id = data[0].trim();
+                    
+                    // Verificar si el ID ya existe
+                    if (!existingIds.add(id)) {
+                        System.err.println("Advertencia: ID duplicado encontrado en el archivo CSV: " + id);
+                        continue; // Saltar este registro
+                    }
+                    
+                    Equipment equipment = new Equipment(id, data[1].trim(), data[2].trim());
                     equipments.add(equipment);
                 }
             }
-            
             reader.close();
+            
+            // Ordenar la lista por ID para asegurar consistencia
+            equipments.sort(Comparator.comparing(Equipment::getId));
         } catch (IOException e) {
             e.printStackTrace();
         }

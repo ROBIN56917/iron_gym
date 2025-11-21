@@ -6,8 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired; // Importa anotac
 import org.springframework.http.HttpStatus; // Importa códigos de estado HTTP
 import org.springframework.http.ResponseEntity; // Importa clase para respuestas HTTP
 import org.springframework.web.bind.annotation.*; // Importa anotaciones para controladores REST
+import jakarta.validation.Valid; // Para activar validaciones sobre el modelo Client (hereda de Person)
+import org.springframework.validation.BindingResult; // Para capturar errores de validación
+import org.springframework.validation.FieldError; // Para detallar errores por campo
 
 import java.util.List; // Importa la interfaz List para trabajar con colecciones
+import java.util.Map; // Para respuestas de error estructuradas
+import java.util.HashMap; // Implementación de Map
 
 @RestController // Anotación que marca esta clase como un controlador REST
 @RequestMapping("/api/clients") // Define la ruta base para todos los endpoints de este controlador
@@ -37,13 +42,85 @@ public class ClientController { // Inicio de la clase ClientController - maneja 
     }
 
     @PostMapping // Anotación que mapea peticiones HTTP POST a este método
-    public ResponseEntity<Client> create(@RequestBody Client client) { // Método para crear nuevo cliente
+    public ResponseEntity<?> create(@Valid @RequestBody Client client, BindingResult result) { // Método para crear nuevo cliente con validaciones
+        if (result.hasErrors()) { // Si hay errores de validación en los campos heredados de Person
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : result.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errors);
+        }
+        // Validaciones de duplicidad
+        if (clientService.isNameDuplicate(client.getName())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("name", "Ya existe un cliente con este nombre");
+            return ResponseEntity.badRequest().body(error);
+        }
+        if (clientService.isEmailDuplicate(client.getEmail())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("email", "Ya existe un cliente con este email");
+            return ResponseEntity.badRequest().body(error);
+        }
+        if (clientService.isIdentificationDuplicate(client.getIdentification())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("identification", "Ya existe un cliente con esta identificación");
+            return ResponseEntity.badRequest().body(error);
+        }
+        if (clientService.isPhoneDuplicate(client.getPhone())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("phone", "Ya existe un cliente con este teléfono");
+            return ResponseEntity.badRequest().body(error);
+        }
+        // Validar que el teléfono no tenga todos los dígitos iguales
+        if (isAllSameDigits(client.getPhone())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("phone", "El teléfono no puede tener todos los dígitos iguales");
+            return ResponseEntity.badRequest().body(error);
+        }
         Client created = clientService.create(client); // Crea el cliente usando el servicio
         return ResponseEntity.status(HttpStatus.CREATED).body(created); // Retorna respuesta HTTP 201 con el cliente creado
     }
 
     @PutMapping("/{id}") // Anotación que mapea peticiones HTTP PUT con parámetro de ruta
-    public ResponseEntity<Client> update(@PathVariable String id, @RequestBody Client client) { // Método para actualizar cliente
+    public ResponseEntity<?> update(@PathVariable String id, @Valid @RequestBody Client client, BindingResult result) { // Método para actualizar cliente con validaciones
+        if (result.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : result.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errors);
+        }
+        Client existing = clientService.getById(id);
+        if (existing == null) {
+            return ResponseEntity.notFound().build();
+        }
+        // Duplicados solo si el valor cambia
+        if (!existing.getName().equals(client.getName()) && clientService.isNameDuplicate(client.getName())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("name", "Ya existe otro cliente con este nombre");
+            return ResponseEntity.badRequest().body(error);
+        }
+        if (!existing.getEmail().equals(client.getEmail()) && clientService.isEmailDuplicate(client.getEmail())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("email", "Ya existe otro cliente con este email");
+            return ResponseEntity.badRequest().body(error);
+        }
+        if (!existing.getIdentification().equals(client.getIdentification()) && clientService.isIdentificationDuplicate(client.getIdentification())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("identification", "Ya existe otro cliente con esta identificación");
+            return ResponseEntity.badRequest().body(error);
+        }
+        if (!existing.getPhone().equals(client.getPhone()) && clientService.isPhoneDuplicate(client.getPhone())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("phone", "Ya existe otro cliente con este teléfono");
+            return ResponseEntity.badRequest().body(error);
+        }
+        // Validar que el teléfono no tenga todos los dígitos iguales
+        if (isAllSameDigits(client.getPhone())) {
+            Map<String, String> error = new HashMap<>();
+            error.put("phone", "El teléfono no puede tener todos los dígitos iguales");
+            return ResponseEntity.badRequest().body(error);
+        }
         Client updated = clientService.update(id, client); // Actualiza el cliente usando el servicio
         if (updated != null) { // Si se actualizó correctamente
             return ResponseEntity.ok(updated); // Retorna respuesta HTTP 200 con el cliente actualizado
@@ -60,5 +137,19 @@ public class ClientController { // Inicio de la clase ClientController - maneja 
         } else { // Si no se encontró el cliente para eliminar
             return ResponseEntity.notFound().build(); // Retorna respuesta HTTP 404 (no encontrado)
         }
+    }
+
+    // Método auxiliar para validar que no todos los dígitos sean iguales (mismo criterio que en PersonController)
+    private boolean isAllSameDigits(String phone) {
+        if (phone == null || phone.length() != 10) {
+            return false;
+        }
+        char firstDigit = phone.charAt(0);
+        for (int i = 1; i < phone.length(); i++) {
+            if (phone.charAt(i) != firstDigit) {
+                return false;
+            }
+        }
+        return true;
     }
 } // Fin de la clase ClientController

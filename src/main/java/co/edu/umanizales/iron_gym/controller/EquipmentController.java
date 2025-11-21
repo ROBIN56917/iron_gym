@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity; // Importa clase para respuestas
 import org.springframework.web.bind.annotation.*; // Importa anotaciones para controladores REST
 
 import java.util.List; // Importa la interfaz List para trabajar con colecciones
+import java.util.Map; // Importa Map para respuestas de error simples
+import java.util.HashMap; // Importa HashMap para construir el mapa de errores
 
 @RestController // Anotación que marca esta clase como un controlador REST
 @RequestMapping("/api/equipments") // Define la ruta base para todos los endpoints de este controlador
@@ -37,9 +39,21 @@ public class EquipmentController { // Inicio de la clase EquipmentController - m
     }
 
     @PostMapping
-    public ResponseEntity<Equipment> create(@RequestBody Equipment equipment) {
-        Equipment created = equipmentService.create(equipment);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<?> create(@RequestBody Equipment equipment) {
+        try {
+            Equipment created = equipmentService.create(equipment);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException e) {
+            // Manejar el caso de ID duplicado
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+        } catch (Exception e) {
+            // Manejar otros errores inesperados
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Error al crear el equipo: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
     @PutMapping("/{id}")

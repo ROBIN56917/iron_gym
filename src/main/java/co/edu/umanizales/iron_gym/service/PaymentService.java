@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service; // Anotación que marca esta clas
 
 import java.io.*; // Importa todas las clases para manejo de archivos
 import java.time.LocalDateTime; // Importa la clase para manejar fechas y horas
+import java.time.format.DateTimeParseException; // Importa excepción para parseo de fecha/hora inválida
 import java.util.ArrayList; // Importa ArrayList para crear listas dinámicas
 import java.util.List; // Importa la interfaz List para trabajar con colecciones
 
@@ -94,12 +95,34 @@ public class PaymentService { // Inicio de la clase PaymentService - contiene la
             while ((line = reader.readLine()) != null) { // Mientras haya líneas por leer
                 String[] data = line.split(","); // Divide la línea por comas para obtener los datos
                 if (data.length == 4) { // Verifica que la línea tenga exactamente 4 campos
-                    Payment payment = new Payment( // Crea pago con datos
-                        data[0], // ID del pago
-                        Double.parseDouble(data[1]), // Monto convertido a double
-                        LocalDateTime.parse(data[2]), // Fecha y hora parseadas
-                        data[3]  // Método de pago
-                    );
+                    String id = data[0] != null ? data[0].trim() : "";
+                    String amountStr = data[1] != null ? data[1].trim() : "";
+                    String dateStr = data[2] != null ? data[2].trim() : "";
+                    String methodStr = data[3] != null ? data[3].trim() : "";
+
+                    if (id.isEmpty()) {
+                        continue; // ID es requerido
+                    }
+
+                    double amount;
+                    try {
+                        amount = Double.parseDouble(amountStr);
+                    } catch (NumberFormatException ex) {
+                        continue; // Monto inválido, omite la fila
+                    }
+
+                    LocalDateTime dt = null;
+                    if (!dateStr.isEmpty() && !"null".equalsIgnoreCase(dateStr)) {
+                        try {
+                            dt = LocalDateTime.parse(dateStr);
+                        } catch (DateTimeParseException ex) {
+                            continue; // Fecha inválida, omite la fila
+                        }
+                    }
+
+                    String method = (methodStr.isEmpty() || "null".equalsIgnoreCase(methodStr)) ? null : methodStr;
+
+                    Payment payment = new Payment(id, amount, dt, method); // Crea pago con datos saneados
                     payments.add(payment); // Agrega el pago a la lista
                 }
             }

@@ -89,6 +89,42 @@ public class ClientService { // Inicio de la clase ClientService - contiene la l
         return result; // Retorna la lista de clientes con membresía
     }
 
+    public boolean isNameDuplicate(String name) {
+        for (Client client : clients) {
+            if (client.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isEmailDuplicate(String email) {
+        for (Client client : clients) {
+            if (client.getEmail().equals(email)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isIdentificationDuplicate(String identification) {
+        for (Client client : clients) {
+            if (client.getIdentification().equals(identification)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isPhoneDuplicate(String phone) {
+        for (Client client : clients) {
+            if (client.getPhone().equals(phone)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void saveToCSV() { // Método privado para guardar los datos en archivo CSV
         try { // Inicia bloque try para manejar posibles excepciones de archivo
             File file = new File(CSV_FILE); // Crea un objeto File con la ruta del CSV
