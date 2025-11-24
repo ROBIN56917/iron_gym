@@ -1,6 +1,7 @@
 package co.edu.umanizales.iron_gym.model; // Declara el paquete donde se encuentra esta clase
 
 import java.time.LocalDateTime; // Importa la clase para manejar fechas y horas
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**
  * Representa cuando un cliente asiste a una clase grupal.
@@ -8,6 +9,7 @@ import java.time.LocalDateTime; // Importa la clase para manejar fechas y horas
  */
 public class Attendance { // Inicio de la clase Attendance - maneja registros de asistencia
     private String id; // Identificador único del registro de asistencia
+    @JsonFormat(pattern = "dd-MM-yyyy'T'HH:mm")
     private LocalDateTime dateTime; // Fecha y hora exacta de la asistencia
     private Client client; // Referencia al cliente que asistió
     private GroupClass groupClass; // Referencia a la clase grupal a la que asistió

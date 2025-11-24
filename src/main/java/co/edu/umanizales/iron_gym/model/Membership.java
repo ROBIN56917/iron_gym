@@ -1,6 +1,9 @@
 package co.edu.umanizales.iron_gym.model;
 
 import java.time.LocalDate;
+import java.text.NumberFormat;
+import java.util.Locale;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 /**
  * Represents a gym membership in the system.
@@ -8,7 +11,8 @@ import java.time.LocalDate;
  */
 public class Membership {
     private String id;
-    private String personId; // Referencia al ID de la persona dueña de la membresía
+    @JsonAlias({"clientId", "personId"})
+    private String clientId; // Referencia al ID del cliente dueño de la membresía (acepta personId en requests)
     private String type;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -17,9 +21,9 @@ public class Membership {
     public Membership() {
     }
     
-    public Membership(String id, String personId, String type, LocalDate startDate, LocalDate endDate, double price) {
+    public Membership(String id, String clientId, String type, LocalDate startDate, LocalDate endDate, double price) {
         this.id = id;
-        this.personId = personId;
+        this.clientId = clientId;
         this.type = type;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -34,12 +38,12 @@ public class Membership {
         this.id = id;
     }
     
-    public String getPersonId() {
-        return personId;
+    public String getClientId() {
+        return clientId;
     }
     
-    public void setPersonId(String personId) {
-        this.personId = personId;
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
     
     public String getType() {
@@ -87,6 +91,19 @@ public class Membership {
             }
         } else { // Si alguna de las fechas es nula
             return false; // La membresía no está activa por datos incompletos
+        }
+    }
+
+    // Formato de precio en pesos colombianos para respuestas JSON (e.g., "$100.000")
+    public String getPriceFormatted() {
+        try {
+            NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("es", "CO"));
+            nf.setMaximumFractionDigits(0);
+            nf.setMinimumFractionDigits(0);
+            String formatted = nf.format(Math.round(this.price));
+            return formatted.replaceAll("\\s+", "");
+        } catch (Exception e) {
+            return "$" + String.format("%,.0f", this.price).replace(',', '.');
         }
     }
 } // Fin de la clase Membership

@@ -2,7 +2,7 @@ package co.edu.umanizales.iron_gym.service; // Declara el paquete donde se encue
 
 import co.edu.umanizales.iron_gym.model.Membership; // Importa la clase Membership del paquete model
 import org.springframework.stereotype.Service; // Anotación que marca esta clase como un servicio de Spring
-import org.springframework.beans.factory.annotation.Autowired; // Para inyectar PersonService
+import org.springframework.beans.factory.annotation.Autowired; // Para inyectar ClientService
 
 import java.io.*; // Importa todas las clases para manejo de archivos
 import java.time.LocalDate; // Importa la clase para manejar fechas sin hora
@@ -16,7 +16,7 @@ public class MembershipService { // Inicio de la clase MembershipService - conti
     private static final List<String> ALLOWED_TYPES = List.of("BASIC", "PREMIUM");
 
     @Autowired
-    private PersonService personService; // Para validar existencia de la persona por ID
+    private ClientService clientService; // Para validar existencia del cliente por ID
 
     public MembershipService() { // Constructor de la clase MembershipService
         this.memberships = new ArrayList<>(); // Inicializa la lista de membresías como ArrayList vacío
@@ -36,17 +36,17 @@ public class MembershipService { // Inicio de la clase MembershipService - conti
         return null; // Retorna null si no se encontró ninguna membresía con ese ID
     }
 
-    public Membership getByPersonId(String personId) { // Buscar membresía por ID de persona
+    public Membership getByClientId(String clientId) { // Buscar membresía por ID de cliente
         for (Membership membership : memberships) {
-            if (personId != null && personId.equals(membership.getPersonId())) {
+            if (clientId != null && clientId.equals(membership.getClientId())) {
                 return membership;
             }
         }
         return null;
     }
 
-    private boolean existsByPersonId(String personId) { // Verifica si ya existe una membresía para esa persona
-        return getByPersonId(personId) != null;
+    private boolean existsByClientId(String clientId) { // Verifica si ya existe una membresía para ese cliente
+        return getByClientId(clientId) != null;
     }
 
     private String generateNextId() { // Genera el siguiente ID con prefijo M y 2 dígitos
@@ -65,24 +65,24 @@ public class MembershipService { // Inicio de la clase MembershipService - conti
 
     public Membership create(Membership membership) { // Método para crear una nueva membresía (ID auto)
         if (membership == null) {
-            throw new IllegalArgumentException("Membership payload is required");
+            throw new IllegalArgumentException("El payload de la membresía es obligatorio");
         }
-        // Validar personId
-        if (membership.getPersonId() == null || membership.getPersonId().isBlank()) {
-            throw new IllegalArgumentException("personId is required");
+        // Validar clientId
+        if (membership.getClientId() == null || membership.getClientId().isBlank()) {
+            throw new IllegalArgumentException("El clientId es obligatorio");
         }
-        if (personService.getById(membership.getPersonId()) == null) { // El personId debe existir
-            throw new IllegalArgumentException("Person ID does not exist");
+        if (clientService.getById(membership.getClientId()) == null) { // El clientId debe existir
+            throw new IllegalArgumentException("El clientId no existe");
         }
-        if (existsByPersonId(membership.getPersonId())) { // Una membresía por persona
-            throw new IllegalArgumentException("This person already has a membership");
+        if (existsByClientId(membership.getClientId())) { // Una membresía por cliente
+            throw new IllegalArgumentException("Este cliente ya tiene una membresía");
         }
         if (membership.getType() == null || membership.getType().isBlank()) {
-            throw new IllegalArgumentException("Membership type is required");
+            throw new IllegalArgumentException("El tipo de membresía es obligatorio");
         }
         String normalizedType = membership.getType().trim().toUpperCase();
         if (!ALLOWED_TYPES.contains(normalizedType)) {
-            throw new IllegalArgumentException("Invalid membership type. Allowed: BASIC, PREMIUM");
+            throw new IllegalArgumentException("Tipo de membresía inválido. Permitidos: BASIC, PREMIUM");
         }
         membership.setType(normalizedType);
         // Generar ID Mxx
@@ -97,16 +97,16 @@ public class MembershipService { // Inicio de la clase MembershipService - conti
         for (int i = 0; i < memberships.size(); i++) { // Recorre la lista de membresías por índice
             if (memberships.get(i).getId().equals(id)) { // Si encuentra la membresía por ID
                 if (updatedMembership.getType() == null || updatedMembership.getType().isBlank()) {
-                    throw new IllegalArgumentException("Membership type is required");
+                    throw new IllegalArgumentException("El tipo de membresía es obligatorio");
                 }
                 String normalizedType = updatedMembership.getType().trim().toUpperCase();
                 if (!ALLOWED_TYPES.contains(normalizedType)) {
-                    throw new IllegalArgumentException("Invalid membership type. Allowed: BASIC, PREMIUM");
+                    throw new IllegalArgumentException("Tipo de membresía inválido. Permitidos: BASIC, PREMIUM");
                 }
                 updatedMembership.setType(normalizedType);
                 updatedMembership.setId(id); // Mantiene el mismo ID en la membresía actualizada
-                // Mantener el mismo personId para evitar inconsistencias
-                updatedMembership.setPersonId(memberships.get(i).getPersonId());
+                // Mantener el mismo clientId para evitar inconsistencias
+                updatedMembership.setClientId(memberships.get(i).getClientId());
                 memberships.set(i, updatedMembership); // Reemplaza la membresía en la posición i con la actualizada
                 saveToCSV(); // Guarda los cambios en el archivo CSV
                 return updatedMembership; // Retorna la membresía actualizada
@@ -146,7 +146,7 @@ public class MembershipService { // Inicio de la clase MembershipService - conti
             file.getParentFile().mkdirs();
             
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            writer.write("id,personId,type,startDate,endDate,price\n");
+            writer.write("id,clientId,type,startDate,endDate,price\n");
             
             for (Membership membership : memberships) {
                 // Formatear el precio con exactamente 3 decimales
@@ -155,7 +155,7 @@ public class MembershipService { // Inicio de la clase MembershipService - conti
                 formattedPrice = formattedPrice.replace(",", ".");
                 
                 writer.write(membership.getId() + "," +
-                           membership.getPersonId() + "," +
+                           membership.getClientId() + "," +
                            membership.getType() + "," + 
                            membership.getStartDate() + "," + 
                            membership.getEndDate() + "," + 
@@ -180,10 +180,10 @@ public class MembershipService { // Inicio de la clase MembershipService - conti
             
             while ((line = reader.readLine()) != null) { // Mientras haya líneas por leer
                 String[] data = line.split(","); // Divide la línea por comas para obtener los datos
-                if (data.length >= 6) { // Formato: id,personId,type,startDate,endDate,price
+                if (data.length >= 6) { // Formato: id,clientId,type,startDate,endDate,price
                     Membership membership = new Membership(
                         data[0], // membershipId
-                        data[1], // personId
+                        data[1], // clientId (o antes personId)
                         data[2], // type
                         LocalDate.parse(data[3]), // startDate
                         LocalDate.parse(data[4]), // endDate

@@ -159,7 +159,7 @@ public class PersonController { // Inicio de la clase PersonController - maneja 
         if (person == null) {
             return ResponseEntity.notFound().build();
         }
-        Membership membership = membershipService.getByPersonId(id);
+        Membership membership = membershipService.getByClientId(id);
         if (membership == null) {
             return ResponseEntity.notFound().build();
         }

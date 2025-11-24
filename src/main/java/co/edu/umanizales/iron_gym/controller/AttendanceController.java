@@ -8,6 +8,12 @@ import org.springframework.http.ResponseEntity; // Importa clase para respuestas
 import org.springframework.web.bind.annotation.*; // Importa anotaciones para controladores REST
 
 import java.util.List; // Importa la interfaz List para trabajar con colecciones
+import java.util.Map;
+import java.util.HashMap;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import co.edu.umanizales.iron_gym.model.Client;
+import co.edu.umanizales.iron_gym.model.GroupClass;
 
 @RestController // Anotación que marca esta clase como un controlador REST
 @RequestMapping("/api/attendances") // Define la ruta base para todos los endpoints de este controlador
@@ -32,18 +38,76 @@ public class AttendanceController { // Inicio de la clase AttendanceController -
     }
 
     @PostMapping // Anotación que mapea peticiones HTTP POST a este método
-    public ResponseEntity<Attendance> create(@RequestBody Attendance attendance) { // Método para crear nueva asistencia
-        Attendance created = attendanceService.create(attendance); // Crea la asistencia usando el servicio
-        return ResponseEntity.status(HttpStatus.CREATED).body(created); // Retorna respuesta HTTP 201 con la asistencia creada
+    public ResponseEntity<?> create(@RequestBody Attendance attendance) { // Método para crear nueva asistencia
+        try {
+            Attendance created = attendanceService.create(attendance); // Crea la asistencia usando el servicio
+            return ResponseEntity.status(HttpStatus.CREATED).body(created); // Retorna respuesta HTTP 201 con la asistencia creada
+        } catch (IllegalArgumentException ex) {
+            java.util.Map<String, String> errors = new java.util.HashMap<>();
+            errors.put("error", ex.getMessage() != null ? ex.getMessage() : "Solicitud inválida");
+            return ResponseEntity.badRequest().body(errors);
+        }
+    }
+
+    // Endpoint alterno para crear asistencia usando IDs planos en el payload
+    @PostMapping("/from-ids")
+    public ResponseEntity<?> createFromIds(@RequestBody Map<String, String> payload) {
+        Map<String, String> errors = new HashMap<>();
+        String id = payload.getOrDefault("id", null);
+        String dateTimeStr = payload.get("dateTime");
+        String clientId = payload.get("clientId");
+        String groupClassId = payload.get("groupClassId");
+
+        if (clientId == null || clientId.isBlank()) {
+            errors.put("clientId", "clientId es obligatorio");
+        }
+        if (groupClassId == null || groupClassId.isBlank()) {
+            errors.put("groupClassId", "groupClassId es obligatorio");
+        }
+        LocalDateTime dt = null;
+        if (dateTimeStr == null || dateTimeStr.isBlank()) {
+            errors.put("dateTime", "dateTime es obligatorio (formato ISO: YYYY-MM-DDTHH:MM)");
+        } else {
+            try {
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy'T'HH:mm");
+                dt = LocalDateTime.parse(dateTimeStr, fmt);
+            } catch (Exception ex) {
+                errors.put("dateTime", "dateTime debe estar en formato dd-MM-yyyy'T'HH:mm");
+            }
+        }
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        Attendance attendance = new Attendance();
+        if (id != null && !id.isBlank()) {
+            attendance.setId(id);
+        }
+        attendance.setDateTime(dt);
+        Client c = new Client();
+        c.setId(clientId);
+        attendance.setClient(c);
+        GroupClass gc = new GroupClass();
+        gc.setId(groupClassId);
+        attendance.setGroupClass(gc);
+
+        Attendance created = attendanceService.create(attendance);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}") // Anotación que mapea peticiones HTTP PUT con parámetro de ruta
-    public ResponseEntity<Attendance> update(@PathVariable String id, @RequestBody Attendance attendance) { // Método para actualizar asistencia
-        Attendance updated = attendanceService.update(id, attendance); // Actualiza la asistencia usando el servicio
-        if (updated != null) { // Si se actualizó correctamente
-            return ResponseEntity.ok(updated); // Retorna respuesta HTTP 200 con la asistencia actualizada
-        } else { // Si no se encontró la asistencia para actualizar
-            return ResponseEntity.notFound().build(); // Retorna respuesta HTTP 404 (no encontrado)
+    public ResponseEntity<?> update(@PathVariable String id, @RequestBody Attendance attendance) { // Método para actualizar asistencia
+        try {
+            Attendance updated = attendanceService.update(id, attendance); // Actualiza la asistencia usando el servicio
+            if (updated != null) { // Si se actualizó correctamente
+                return ResponseEntity.ok(updated); // Retorna respuesta HTTP 200 con la asistencia actualizada
+            } else { // Si no se encontró la asistencia para actualizar
+                return ResponseEntity.notFound().build(); // Retorna respuesta HTTP 404 (no encontrado)
+            }
+        } catch (IllegalArgumentException ex) {
+            java.util.Map<String, String> errors = new java.util.HashMap<>();
+            errors.put("error", ex.getMessage() != null ? ex.getMessage() : "Solicitud inválida");
+            return ResponseEntity.badRequest().body(errors);
         }
     }
 

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.*; // Importa todas las clases para manejo de archivos
 import java.time.LocalDateTime; // Importa la clase para manejar fechas y horas
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList; // Importa ArrayList para crear listas dinámicas
 import java.util.List; // Importa la interfaz List para trabajar con colecciones
 
@@ -15,6 +17,7 @@ import java.util.List; // Importa la interfaz List para trabajar con colecciones
 public class AttendanceService { // Inicio de la clase AttendanceService - contiene la lógica de negocio para asistencias
     private List<Attendance> attendances; // Lista que almacena todas las asistencias del sistema
     private final String CSV_FILE = "data/attendances.csv"; // Ruta del archivo CSV donde se guardan los datos de asistencias
+    private static final DateTimeFormatter CSV_DT = DateTimeFormatter.ofPattern("dd-MM-yyyy'T'HH:mm");
     @Autowired
     private ClientService clientService;
     @Autowired
@@ -135,7 +138,7 @@ public class AttendanceService { // Inicio de la clase AttendanceService - conti
                 String clientId = attendance.getClient() != null ? attendance.getClient().getId() : "";
                 String groupClassId = attendance.getGroupClass() != null ? attendance.getGroupClass().getId() : "";
                 writer.write(attendance.getId() + "," + // Escribe el ID de la asistencia
-                           attendance.getDateTime() + "," +
+                           (attendance.getDateTime() == null ? "" : attendance.getDateTime().format(CSV_DT)) + "," +
                            clientId + "," +
                            groupClassId + "\n");
             }
@@ -161,7 +164,15 @@ public class AttendanceService { // Inicio de la clase AttendanceService - conti
                 String[] data = line.split(","); // Divide la línea por comas y almacena los valores en un arreglo
                 if (data.length >= 4) { // Nuevo formato: id,dateTime,clientId,groupClassId
                     String id = data[0];
-                    LocalDateTime dt = LocalDateTime.parse(data[1]);
+                    LocalDateTime dt = null;
+                    String dateStr = data[1];
+                    if (dateStr != null && !dateStr.isBlank()) {
+                        try {
+                            dt = LocalDateTime.parse(dateStr, CSV_DT); // dd-MM-yyyy
+                        } catch (DateTimeParseException ex1) {
+                            dt = LocalDateTime.parse(dateStr); // Fallback ISO
+                        }
+                    }
                     String clientId = data[2];
                     String groupClassId = data[3];
 
@@ -177,7 +188,13 @@ public class AttendanceService { // Inicio de la clase AttendanceService - conti
                 } else if (data.length >= 2) { // Compatibilidad con formato antiguo: id,dateTime
                     Attendance attendance = new Attendance();
                     attendance.setId(data[0]);
-                    attendance.setDateTime(LocalDateTime.parse(data[1]));
+                    LocalDateTime dt;
+                    try {
+                        dt = LocalDateTime.parse(data[1], CSV_DT);
+                    } catch (DateTimeParseException ex1) {
+                        dt = LocalDateTime.parse(data[1]);
+                    }
+                    attendance.setDateTime(dt);
                     attendances.add(attendance);
                 }
             }
